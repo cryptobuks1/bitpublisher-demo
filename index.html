@@ -115,8 +115,6 @@
   </div>
 
 </div>
-<!-- <script type="text/javascript" charset="utf8" src="//cdn.datatables.net/1.10.15/js/jquery.dataTables.js"></script>
-<script src="https://cdn.datatables.net/plug-ins/1.10.15/api/row().show().js"></script> -->
 <script>
 
     document.addEventListener("DOMContentLoaded", function(event) {
@@ -133,7 +131,14 @@
         });
 
         $TABLE.on("click",".table-remove", function () {
+            //TODO: incomplete
           $(this).parents('tr').detach();
+        })
+
+        $TABLE.on("click",".table-txid", function () {
+           let txid = JSON.parse($(this).parents('tr').attr('id')).txId
+        //    console.log(txid)
+           window.open(`https://www.blocktrail.com/tBCC/tx/${txid}`, '_blank')
         })
 
         $("#addRecord").click(function () {
@@ -142,24 +147,29 @@
           create(newRecord)
         })
 
-        $TABLE.on('change',".table-status", function () {
+        $TABLE.on('change',".table-status", async function () {
           let tr = $(this).parents('tr')
+          tr.addClass('table-warning')
           let utxo = getUtxoFromTR(tr)
-          console.log(utxo)
           let newRecord = makeRecordFromTR(tr)
-          console.log(newRecord)
-          update(utxo, newRecord)
-          tr.detach()
+            update(utxo, newRecord)
+            .then(newUtxo => {
+                // console.log(newUtxo)
+                read(newUtxo).then(newDataRead => updateTrFromUtxo(tr, newUtxo, newDataRead))
+            })
+            
+        // const newDataRead = await read(newUtxo)
+        // updateTrFromUtxo(tr, newUtxo, newDataRead)
         })
 
         // Tooltips Initialization
         $(function () {
-        $('[data-toggle="tooltip"]').tooltip()
+            $('[data-toggle="tooltip"]').tooltip()
         })
 
     });
 
-    const dbservice = 'http://35.237.236.13'
+    const dbservice = 'http://35.237.236.130:3001'
 
     function refreshTable() {
       var $TABLE = $('#table');
@@ -173,10 +183,6 @@
     }
 
     const create = async(newData) => {
-      //console.log(`adding ${JSON.stringify(newData)}`)
-      //const newUtxo = await bt.create(newData)
-      // const result = await fetch(`${dbservice}/create/`)
-      // let newUtxo = response.json()
       (async () => {
       const response = await fetch(`${dbservice}/create/`, {
           method: 'POST',
@@ -192,6 +198,7 @@
     }
 
     const read = async(recordid) => {
+        //console.log(recordid)
       var url = new URL(`${dbservice}/read/`), params = recordid
       Object.keys(params).forEach(key => url.searchParams.append(key, params[key]))
       const response = await fetch(url)
@@ -200,11 +207,9 @@
 
     const update = async(utxo, newRecord) => {
       try {
-        console.log('update');
-        console.log(utxo);
-        console.log(newRecord);
-        //const newUtxo = await bt.update(utxo, newRecord)
-        (async () => {
+        // console.log('update');
+        // console.log(utxo);
+        // (async () => {
           const response = await fetch(`${dbservice}/update/`, {
               method: 'POST',
               headers: {
@@ -213,9 +218,10 @@
               },
               body: JSON.stringify({"id":utxo,"record":newRecord})
             });
-            const newUtxo = await response.json();
-            readAndAddTable(newUtxo)
-        })();
+            return await response.json();
+            //return newUtxo
+            //readAndAddTable(newUtxo)
+        // })();
       }
       catch (err) {
         alert(err)
@@ -224,13 +230,25 @@
     }
 
     const readAndAddTable = async(newUtxo) => {
-      console.log('readandaddtable')
+      //console.log('readandaddtable')
       const newDataRead = await read(newUtxo)
       show(newDataRead, newUtxo)
     }
 
-    function getUtxoFromTR(tr) {
+    function getUtxoFromTR(tr, newUtxo) {
       return JSON.parse(tr.attr('id'))
+    }
+
+    function updateTrFromUtxo(tr, utxo, record) {
+        console.log(utxo)
+        console.log(record)
+        tr.attr('id', JSON.stringify(utxo))
+        tr.find('.table-txid button').attr('title', JSON.stringify(utxo))
+        tr.find('.table-txid button').text(`${utxo.txId.substr(0,10)}...`)
+        console.log(tr.find('.table-txid button').attr('title'))
+        tr.find('#lblCertificate').text(record.data.certificate)
+        tr.find('#ddlStatus').val(record.data.status)
+        tr.removeClass('table-warning')
     }
 
     function makeRecordFromTR(tr) {
@@ -242,7 +260,7 @@
     }
 
     function addRowToTable(record, id) {
-      console.log(record)
+      //console.log(record)
       var $TABLE = $('#table');
       $TABLE.find('tbody').append(dataRow(record, id));
     }
@@ -262,20 +280,21 @@
               <span class="table-remove"><button type="button" class="btn btn-danger btn-rounded btn-sm my-0"
                 data-toggle="tooltip" data-placement="top" title="Remove the record"
                 >Remove</button>
-                <button>History</button>
               </span>
             </td>
             <td class="pt-3-half">
-              <button type="button" class="btn btn-light" data-toggle="tooltip" data-placement="top" title="${JSON.stringify(id)}">
+              <span class="table-txid"><button type="button" class="btn btn-light" title="${JSON.stringify(id)}">
                   ${id.txId.substr(0,10)}...
               </button>
-              </td>
+              </span>
+            </td>
           </tr>`
     }
+    // <button>History</button>
 
       function show(record, utxo) {
-        console.log(`record ${JSON.stringify(record)}`)
-        console.log(`id ${JSON.stringify(utxo)}`)
+        //console.log(`record ${JSON.stringify(record)}`)
+        //console.log(`id ${JSON.stringify(utxo)}`)
         addRowToTable(record, utxo)
       }
 
