@@ -22,7 +22,6 @@
       </style>
   </head>
   <body>
-    <!-- <script src="./bundle.js"></script> -->
 <div>
   <label id="lblWallet">The bitcoin registry. Example of maintaining public data in bitcoin.</label>
 </div>
@@ -198,7 +197,6 @@
     }
 
     const read = async(recordid) => {
-        //console.log(recordid)
       var url = new URL(`${dbservice}/read/`), params = recordid
       Object.keys(params).forEach(key => url.searchParams.append(key, params[key]))
       const response = await fetch(url)
@@ -207,8 +205,6 @@
 
     const update = async(utxo, newRecord) => {
       try {
-        // console.log('update');
-        // console.log(utxo);
         // (async () => {
           const response = await fetch(`${dbservice}/update/`, {
               method: 'POST',
@@ -230,7 +226,6 @@
     }
 
     const readAndAddTable = async(newUtxo) => {
-      //console.log('readandaddtable')
       const newDataRead = await read(newUtxo)
       show(newDataRead, newUtxo)
     }
@@ -240,12 +235,11 @@
     }
 
     function updateTrFromUtxo(tr, utxo, record) {
-        console.log(utxo)
-        console.log(record)
+        // console.log(utxo)
+        // console.log(record)
         tr.attr('id', JSON.stringify(utxo))
         tr.find('.table-txid button').attr('title', JSON.stringify(utxo))
         tr.find('.table-txid button').text(`${utxo.txId.substr(0,10)}...`)
-        console.log(tr.find('.table-txid button').attr('title'))
         tr.find('#lblCertificate').text(record.data.certificate)
         tr.find('#ddlStatus').val(record.data.status)
         tr.removeClass('table-warning')
@@ -260,7 +254,6 @@
     }
 
     function addRowToTable(record, id) {
-      //console.log(record)
       var $TABLE = $('#table');
       $TABLE.find('tbody').append(dataRow(record, id));
     }
@@ -293,8 +286,6 @@
     // <button>History</button>
 
       function show(record, utxo) {
-        //console.log(`record ${JSON.stringify(record)}`)
-        //console.log(`id ${JSON.stringify(utxo)}`)
         addRowToTable(record, utxo)
       }
 
