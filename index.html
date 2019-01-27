@@ -25,6 +25,9 @@
 <div>
   <label id="lblWallet">The bitcoin registry. Example of maintaining public data in bitcoin.</label>
 </div>
+<div>
+    <label id="lblSystemStatus">Unknown Status</label>
+</div>
 
 <!-- Editable table -->
 <div class="card">
@@ -114,6 +117,7 @@
   </div>
 
 </div>
+
 <script>
 
     document.addEventListener("DOMContentLoaded", function(event) {
@@ -131,12 +135,17 @@
 
         $TABLE.on("click",".table-remove", function () {
             //TODO: incomplete
-          $(this).parents('tr').detach();
+            let tr = $(this).parents('tr')
+            let recordid = JSON.parse(tr.attr('id'))
+            remove(recordid)
+                .then(() => {
+                    //todo catch
+                    tr.detach();
+                })
         })
 
         $TABLE.on("click",".table-txid", function () {
            let txid = JSON.parse($(this).parents('tr').attr('id')).txId
-        //    console.log(txid)
            window.open(`https://www.blocktrail.com/tBCC/tx/${txid}`, '_blank')
         })
 
@@ -156,9 +165,6 @@
                 // console.log(newUtxo)
                 read(newUtxo).then(newDataRead => updateTrFromUtxo(tr, newUtxo, newDataRead))
             })
-            
-        // const newDataRead = await read(newUtxo)
-        // updateTrFromUtxo(tr, newUtxo, newDataRead)
         })
 
         // Tooltips Initialization
@@ -168,17 +174,38 @@
 
     });
 
-    const dbservice = 'http://35.237.236.130:3001'
+    const dbservice = 'http://localhost:3001'
 
-    function refreshTable() {
+    function clearTable() {
       var $TABLE = $('#table');
       $TABLE.find('tbody').html("")
-      list().then(l => l.map(utxo => read(utxo).then(r => show(r, utxo))))
+    }
+
+    function whenError(err) {
+        $('#lblSystemStatus').text(`Error: ${err}`)
+    }
+
+    function refreshTable() {
+      clearTable()
+      try
+      {
+        list().then(l => {
+            l.map(utxo => read(utxo).then(r => show(r, utxo)))
+            $('#lblSystemStatus').text(`Read ${l.length} records`)
+        })
+      }
+      catch (err) {
+        whenError(err)
+      }
     }
 
     const list = async() => {
-      const response = await fetch(`${dbservice}/list/`)
-      return response.json()
+        try {
+            const response = await fetch(`${dbservice}/list/`)
+            return response.json()
+        } catch(err) {
+            whenError(err)
+        }
     }
 
     const create = async(newData) => {
@@ -194,6 +221,23 @@
         const newUtxo = await response.json();
         readAndAddTable(newUtxo)
       })();
+    }
+
+    const remove = async(recordId) => {
+      try {
+        const response = await fetch(`${dbservice}/remove/`, {
+          method: 'POST',
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(recordId)
+        });
+        return response;
+      }
+      catch (err) {
+        whenError(err)
+      }
     }
 
     const read = async(recordid) => {
