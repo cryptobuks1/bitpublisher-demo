@@ -7,4 +7,4 @@ Blockchain maintains auditable history of data changes.
 
 # Live Demo
 
-[Editable Bitcoin Data](index.html)
+[Editable Bitcoin Data](http://35.237.236.130/)
