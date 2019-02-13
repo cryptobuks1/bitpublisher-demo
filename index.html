@@ -47,6 +47,7 @@
             <tr>
               <th class="text-center">Certificate</th>
               <th class="text-center">Status</th>
+              <th class="text-center">Details</th>
               <th class="text-center">Remove</th>
               <th class="text-center">Id</th>
             </tr>
@@ -106,6 +107,10 @@
                 <option value="DEC">Deceased</option>
             </select>
           </div>
+          <div>
+            <label for="txtAddDetails">Details</label>
+            <textarea for="txtAddDetails"></textarea>
+          </div>
 
         </div>
         <div class="modal-footer">
@@ -146,12 +151,14 @@
 
         $TABLE.on("click",".table-txid", function () {
            let txid = JSON.parse($(this).parents('tr').attr('id')).txId
-           window.open(`https://test-bch-insight.bitpay.com/${txid}`, '_blank')
+           //window.open(`https://www.blocktrail.com/tBCC/tx/${txid}`, '_blank')
+           window.open(`https://tbch.blockdozer.com/tx/${txid}`, '_blank')
+           //window.open(`https://explorer.bitcoin.com/tbch/tx/${txid}`, '_blank')
         })
 
         $("#addRecord").click(function () {
           $("#modalEdit").modal('hide')
-          let newRecord = makeRecord($('#txtAddCertificate').val(), $('#ddlAddStatus').val())
+          let newRecord = makeRecord($('#txtAddCertificate').val(), $('#ddlAddStatus').val(), $('#txtAddDetails').val())
           create(newRecord)
         })
 
@@ -174,7 +181,7 @@
 
     });
 
-    const dbservice = 'http://35.237.236.130:3001'
+    const dbservice = 'http://35.243.152.36:3001'
 
     function clearTable() {
       var $TABLE = $('#table');
@@ -286,6 +293,7 @@
         tr.find('.table-txid button').text(`${utxo.txId.substr(0,10)}...`)
         tr.find('#lblCertificate').text(record.data.certificate)
         tr.find('#ddlStatus').val(record.data.status)
+        tr.find('#txtDetails').text(record.data.details)
         tr.removeClass('table-warning')
     }
 
@@ -313,6 +321,7 @@
                 <option value="DEC" ${record.data.status==="DEC" ? "selected" : ""}>Deceased</option>
             </select>
             </td>
+            <td class="pt-3-half"><textarea class="table-details" id="txtDetails">${record.data.details}</textarea></td>
             <td>
               <span class="table-remove"><button type="button" class="btn btn-danger btn-rounded btn-sm my-0"
                 data-toggle="tooltip" data-placement="top" title="Remove the record"
