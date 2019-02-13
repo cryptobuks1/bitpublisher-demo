@@ -164,14 +164,12 @@
 
         $TABLE.on('change',".table-status", async function () {
           let tr = $(this).parents('tr')
-          tr.addClass('table-warning')
-          let utxo = getUtxoFromTR(tr)
-          let newRecord = makeRecordFromTR(tr)
-            update(utxo, newRecord)
-            .then(newUtxo => {
-                // console.log(newUtxo)
-                read(newUtxo).then(newDataRead => updateTrFromUtxo(tr, newUtxo, newDataRead))
-            })
+          saveChange(tr)
+        })
+
+        $TABLE.on('change',".table-details", async function () {
+          let tr = $(this).parents('tr')
+          saveChange(tr)
         })
 
         // Tooltips Initialization
@@ -182,6 +180,16 @@
     });
 
     const dbservice = 'http://35.243.152.36:3001'
+
+    function saveChange(tr) {
+      tr.addClass('table-warning')
+      let utxo = getUtxoFromTR(tr)
+      let newRecord = makeRecordFromTR(tr)
+        update(utxo, newRecord)
+        .then(newUtxo => {
+            read(newUtxo).then(newDataRead => updateTrFromUtxo(tr, newUtxo, newDataRead))
+        })
+    }
 
     function clearTable() {
       var $TABLE = $('#table');
@@ -298,11 +306,11 @@
     }
 
     function makeRecordFromTR(tr) {
-      return makeRecord(tr.find(".table-certificate").text(), tr.find(".table-status").val())
+      return makeRecord(tr.find(".table-certificate").text(), tr.find(".table-status").val(), tr.find(".table-details").val())
     }
 
-    function makeRecord(lic, status) {
-      return {"certificate": lic, "status": status}
+    function makeRecord(lic, status, details) {
+      return {"certificate": lic, "status": status, "details": details}
     }
 
     function addRowToTable(record, id) {
@@ -321,7 +329,7 @@
                 <option value="DEC" ${record.data.status==="DEC" ? "selected" : ""}>Deceased</option>
             </select>
             </td>
-            <td class="pt-3-half"><textarea class="table-details" id="txtDetails">${record.data.details}</textarea></td>
+            <td class="pt-3-half"><textarea class="table-details" id="txtDetails">${record.data.details || ''}</textarea></td>
             <td>
               <span class="table-remove"><button type="button" class="btn btn-danger btn-rounded btn-sm my-0"
                 data-toggle="tooltip" data-placement="top" title="Remove the record"
